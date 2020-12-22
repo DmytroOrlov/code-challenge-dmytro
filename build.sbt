@@ -5,12 +5,14 @@ ThisBuild / scalacOptions ++= Seq(
 )
 
 val V = new {
+  val catsEffect = "2.3.1"
   val zioInteropCats = "2.2.0.1"
   val zio = "1.0.3"
   val distage = "0.10.19"
   val tapir = "0.17.1"
   val sttp = "2.2.9"
   val elastic4s = "7.10.0"
+  val scalaCsv = "1.3.6"
 
   val scalacheck = "1.15.2"
 
@@ -21,12 +23,15 @@ val V = new {
 }
 
 val Deps = new {
+  val catsEffect = "org.typelevel" %% "cats-effect" % V.catsEffect
   val zioInteropCats = "dev.zio" %% "zio-interop-cats" % V.zioInteropCats
   val zio = "dev.zio" %% "zio" % V.zio
   val distageFramework = "io.7mind.izumi" %% "distage-framework" % V.distage
   val distageFrameworkDocker = "io.7mind.izumi" %% "distage-framework-docker" % V.distage
   val distageTestkitScalatest = "io.7mind.izumi" %% "distage-testkit-scalatest" % V.distage
   val logstageAdapterSlf4J = "io.7mind.izumi" %% "logstage-adapter-slf4j" % V.distage
+
+  val scalaCsv = "com.github.tototoshi" %% "scala-csv" % V.scalaCsv
 
   val tapirJsonCirce = "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % V.tapir
   val tapirHttp4sServer = "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % V.tapir
@@ -55,6 +60,7 @@ lazy val `code-challenge-dmytro` = (project in file("."))
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
+      Deps.catsEffect,
       Deps.zio,
       Deps.zioInteropCats,
       Deps.logstageAdapterSlf4J,
@@ -66,6 +72,8 @@ lazy val `code-challenge-dmytro` = (project in file("."))
 
       Deps.sttpClientCirce,
       Deps.asyncHttpClientBackendZio,
+
+      Deps.scalaCsv,
 
       Deps.tapirJsonCirce,
       Deps.tapirHttp4sServer,

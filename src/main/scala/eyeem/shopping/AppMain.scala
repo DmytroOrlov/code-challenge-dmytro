@@ -1,5 +1,6 @@
 package eyeem.shopping
 
+import distage.{Tag, _}
 import zio._
 import zio.console._
 
@@ -9,6 +10,18 @@ object AppMain extends App {
       _ <- putStrLn("123")
     } yield ()
 
-    program.exitCode
+    def provideHas[R: HasConstructor, A: Tag](fn: R => A): ProviderMagnet[A] =
+      HasConstructor[R].map(fn)
+
+    val definition = new ModuleDef {
+      make[Console.Service].fromHas(Console.live)
+      make[UIO[Unit]].from(provideHas(program.provide))
+    }
+
+    val app = Injector()
+      .produceGetF[Task, UIO[Unit]](definition)
+      .useEffect
+
+    app.exitCode
   }
 }

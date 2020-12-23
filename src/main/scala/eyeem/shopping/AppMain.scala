@@ -4,6 +4,8 @@ import distage.{Tag, _}
 import zio._
 import zio.console._
 
+import java.net.URI
+
 object AppMain extends App {
   def run(args: List[String]) = {
     val program = for {
@@ -39,3 +41,5 @@ object AppMain extends App {
     app.exitCode
   }
 }
+
+case class AppCfg(url: URI)

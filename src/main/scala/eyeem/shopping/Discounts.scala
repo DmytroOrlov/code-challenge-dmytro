@@ -2,10 +2,31 @@ package eyeem.shopping
 
 import capture.Capture
 import capture.Capture.Constructors
+import io.circe
+import io.circe.generic.auto._
+import sttp.client._
+import sttp.client.circe._
 import zio._
 import zio.macros.accessible
 
 case class Discount(name: String, value: Double)
+
+@accessible
+trait DiscountSvc {
+  def request(name: String): UIO[RequestT[Identity, Either[ResponseError[circe.Error], Discount], Nothing]]
+}
+
+object DiscountSvc {
+  def make(cfg: AppCfg) =
+    new DiscountSvc {
+      def request(name: String) = IO.succeed {
+        basicRequest
+          .get(uri"$cfg/$name")
+          .response(asJson[Discount])
+      }
+    }
+}
+
 
 @accessible
 trait Discounts {
@@ -13,6 +34,16 @@ trait Discounts {
 }
 
 object Discounts {
+  val make = {
+    for {
+      _ <- zio.IO.unit
+    } yield new Discounts {
+      def discount(name: String) = {
+        ???
+      }
+    }
+  }
+
   val dummy = new Discounts {
     def discount(name: String) =
       IO.fail(None)

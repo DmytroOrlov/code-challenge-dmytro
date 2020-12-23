@@ -12,7 +12,7 @@ object AppMain extends App {
       res <- CsvReader.readLineitems
       dsNames = res.foldLeft(Set.empty[String])((acc, li) => li.discountCode.fold(acc)(acc + _))
       ds <- ZIO.collectParN(4)(dsNames.toList)(Discounts.discount)
-      discountMap = ds.toMap.withDefaultValue(0.0)
+      discountMap = ds.map(d => d.name -> d.value).toMap.withDefaultValue(0.0)
       _ = res.foreach(println(_))
     } yield ()
 

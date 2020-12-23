@@ -5,15 +5,15 @@ import capture.Capture.Constructors
 import cats.syntax.option._
 import eyeem.shopping.DiscountErr.throwable
 import sttp.client.{NothingT, SttpBackend}
+import sttp.model.StatusCode.NotFound
 import zio._
 import zio.macros.accessible
-import sttp.model.StatusCode.NotFound
 
 case class Discount(name: String, value: Double)
 
 @accessible
 trait Discounts {
-  def discount(name: String): IO[Option[Capture[DiscountErr]], (String, Double)]
+  def discount(name: String): IO[Option[Capture[DiscountErr]], Discount]
 }
 
 object Discounts {
@@ -25,12 +25,11 @@ object Discounts {
       def discount(name: String) =
         (for {
           request <- DiscountSvc.request(name)
-          resp <- request.send().mapError(throwable("DiscountSvc.request.send")(_).some)
+          resp <- request.send().mapError(throwable("DiscountSvc.send")(_).some)
           _ <- IO.fail(none)
             .when(resp.code == NotFound)
-        } yield {
-          ???
-        }) provide env
+          disc <- IO.fromEither(resp.body).mapError(throwable("DiscountSvc.body")(_).some)
+        } yield disc) provide env
     }
   }
 

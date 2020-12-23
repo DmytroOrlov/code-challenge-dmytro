@@ -13,7 +13,7 @@ case class Discount(name: String, value: Double)
 
 @accessible
 trait Discounts {
-  def discount(name: String): IO[Option[Capture[DiscountErr]], Discount]
+  def discount(name: String): IO[Capture[DiscountErr], Option[Discount]]
 }
 
 object Discounts {
@@ -25,17 +25,17 @@ object Discounts {
       def discount(name: String) =
         (for {
           request <- DiscountSvc.request(name)
-          resp <- request.send().mapError(throwable("DiscountSvc.send")(_).some)
-          _ <- IO.fail(none)
-            .when(resp.code == NotFound)
-          disc <- IO.fromEither(resp.body).mapError(throwable("DiscountSvc.body")(_).some)
+          resp <- request.send().mapError(throwable("DiscountSvc.send"))
+          disc <-
+            if (resp.code == NotFound) IO.succeed(none)
+            else IO.fromEither(resp.body).bimap(throwable("DiscountSvc.body"), _.some)
         } yield disc) provide env
     }
   }
 
   val dummy = new Discounts {
     def discount(name: String) =
-      IO.fail(None)
+      IO.succeed(none)
   }
 }
 

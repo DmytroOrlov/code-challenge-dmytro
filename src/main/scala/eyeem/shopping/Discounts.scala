@@ -9,7 +9,7 @@ import sttp.model.StatusCode.NotFound
 import zio._
 import zio.macros.accessible
 
-case class Discount(name: String, value: Double)
+case class Discount(name: String, discount: Int)
 
 @accessible
 trait Discounts {
@@ -19,7 +19,7 @@ trait Discounts {
 object Discounts {
   val make = {
     for {
-      implicit0(sb: SttpBackend[Task, Nothing, NothingT]) <- ZIO.service[SttpBackend[Task, Nothing, NothingT]]
+      implicit0(sb: SttpBackend[Task, Nothing, NothingT]) <- Sttp.backend
       env <- ZIO.environment[Has[DiscountSvc]]
     } yield new Discounts {
       def discount(name: String) =

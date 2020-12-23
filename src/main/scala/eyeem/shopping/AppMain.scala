@@ -1,54 +1,48 @@
 package eyeem.shopping
 
 import cats.syntax.option._
-import distage.{Tag, _}
+import distage._
+import izumi.distage.plugins.PluginConfig
+import izumi.distage.plugins.load.PluginLoader
 import zio.Schedule.{elapsed, exponential}
 import zio._
-import zio.console._
 import zio.duration._
 
 import java.net.URI
 
 object AppMain extends App {
+  val program = for {
+    lineitems <- CsvReader.readLineitems
+    _ <- UIO(lineitems.foreach(println(_)))
+    dsNames = lineitems.foldLeft(Set.empty[String])((acc, li) => li.discountCode.fold(acc)(acc + _))
+    _ <- UIO(dsNames.foreach(println(_)))
+    discounts <- ZIO.collectParN(4)(dsNames.toList)(
+      Discounts.discount(_)
+        .retry((exponential(1.millisecond) >>> elapsed).whileOutput(_ < 20.seconds))
+        .bimap(_.some, _.toRight(none))
+        .absolve
+    )
+    discountMap = discounts.map(d => d.name -> d.discount).toMap.withDefaultValue(0.0)
+    _ = discountMap.foreach(println(_))
+  } yield ()
+
   def run(args: List[String]) = {
-    val program = for {
-      res <- CsvReader.readLineitems
-      dsNames = res.foldLeft(Set.empty[String])((acc, li) => li.discountCode.fold(acc)(acc + _))
-      ds <- ZIO.collectParN(4)(dsNames.toList)(
-        Discounts.discount(_)
-          .retry((exponential(10.milliseconds) >>> elapsed).whileOutput(_ < 1.minute))
-          .bimap(_.some, _.toRight(none))
-          .absolve
+    val pluginConfig = PluginConfig.cached(
+      packagesEnabled = Seq(
+        "eyeem.shopping",
       )
-      discountMap = ds.map(d => d.name -> d.value).toMap.withDefaultValue(0.0)
-      _ = res.foreach(println(_))
-      _ = discountMap.foreach(println(_))
-    } yield ()
-
-    def provideHas[R: HasConstructor, A: Tag](fn: R => A): ProviderMagnet[A] =
-      HasConstructor[R].map(fn)
-
-    val definition = new ModuleDef {
-      make[String]
-        .named("csv")
-        .fromValue("lineitems.csv")
-
-      make[CsvReader].fromResource(CsvReader.make _)
-      make[Discounts].fromValue(Discounts.dummy)
-      make[Console.Service].fromHas(Console.live)
-      make[Task[Unit]].from(provideHas(
-        program
-          .mapError(_ continue new DiscountErr.AsThrowable {})
-          .provide
-      ))
-    }
+    )
+    val appModules = PluginLoader().load(pluginConfig)
 
     val app = Injector()
-      .produceGetF[Task, Task[Unit]](definition)
+      .produceGetF[Task, Task[Unit]](appModules.merge)
       .useEffect
 
     app.exitCode
   }
 }
 
-case class AppCfg(url: URI)
+case class AppCfg(
+    url: URI,
+    readTimeout: scala.concurrent.duration.Duration,
+)

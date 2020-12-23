@@ -30,7 +30,7 @@ object CsvReader {
         }
       }.toManaged_
     } yield new CsvReader {
-      def readLineitems = IO.succeed {
+      val readLineitems = IO.succeed {
         res
       }
     }

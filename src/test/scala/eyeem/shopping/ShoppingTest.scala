@@ -6,10 +6,9 @@ import org.scalatest.{EitherValues, OptionValues}
 import zio._
 
 class ShoppingTest extends DistageBIOEnvSpecScalatest[ZIO] with OptionValues with EitherValues with TypeCheckedTripleEquals {
-  "" must {
-    "" in {
+  "1" must {
+    "2" in {
       for {
-        _ <- IO.unit
         _ <- IO {
           assert(false)
         }

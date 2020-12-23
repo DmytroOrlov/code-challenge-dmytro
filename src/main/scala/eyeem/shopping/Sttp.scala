@@ -1,6 +1,6 @@
 package eyeem.shopping
 
-import io.circe
+import io.circe._
 import io.circe.generic.auto._
 import sttp.client._
 import sttp.client.asynchttpclient.zio.AsyncHttpClientZioBackend
@@ -8,11 +8,9 @@ import sttp.client.circe._
 import zio._
 import zio.macros.accessible
 
-import scala.concurrent.duration._
-
 @accessible
 trait DiscountSvc {
-  def request(name: String): UIO[RequestT[Identity, Either[ResponseError[circe.Error], Discount], Nothing]]
+  def request(name: String): UIO[RequestT[Identity, Either[ResponseError[Error], Discount], Nothing]]
 }
 
 object DiscountSvc {
@@ -20,9 +18,9 @@ object DiscountSvc {
     new DiscountSvc {
       def request(name: String) = IO.succeed {
         basicRequest
-          .get(uri"$cfg/$name")
+          .get(uri"${cfg.url}/$name")
           .response(asJson[Discount])
-          .readTimeout(5.seconds)
+          .readTimeout(cfg.readTimeout)
       }
     }
 }

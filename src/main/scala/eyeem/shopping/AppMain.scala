@@ -8,6 +8,9 @@ object AppMain extends App {
   def run(args: List[String]) = {
     val program = for {
       res <- CsvReader.readLineitems
+      dsNames = res.foldLeft(Set.empty[String])((acc, li) => li.discountCode.fold(acc)(acc + _))
+      ds <- ZIO.collectParN(4)(dsNames.toList)(Discounts.discount)
+      discountMap = ds.toMap.withDefaultValue(0.0)
       _ = res.foreach(println(_))
     } yield ()
 
@@ -20,12 +23,17 @@ object AppMain extends App {
         .fromValue("lineitems.csv")
 
       make[CsvReader].fromResource(CsvReader.make _)
+      make[Discounts].fromValue(Discounts.dummy)
       make[Console.Service].fromHas(Console.live)
-      make[UIO[Unit]].from(provideHas(program.provide))
+      make[Task[Unit]].from(provideHas(
+        program
+          .mapError(_ continue new DiscountErr.AsThrowable {})
+          .provide
+      ))
     }
 
     val app = Injector()
-      .produceGetF[Task, UIO[Unit]](definition)
+      .produceGetF[Task, Task[Unit]](definition)
       .useEffect
 
     app.exitCode

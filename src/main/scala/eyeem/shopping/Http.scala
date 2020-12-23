@@ -8,6 +8,8 @@ import sttp.client.circe._
 import zio._
 import zio.macros.accessible
 
+import scala.concurrent.duration._
+
 @accessible
 trait DiscountSvc {
   def request(name: String): UIO[RequestT[Identity, Either[ResponseError[circe.Error], Discount], Nothing]]
@@ -20,6 +22,7 @@ object DiscountSvc {
         basicRequest
           .get(uri"$cfg/$name")
           .response(asJson[Discount])
+          .readTimeout(5.seconds)
       }
     }
 }

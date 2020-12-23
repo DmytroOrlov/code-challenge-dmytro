@@ -7,6 +7,7 @@ import eyeem.shopping.DiscountErr.throwable
 import sttp.client.{NothingT, SttpBackend}
 import zio._
 import zio.macros.accessible
+import sttp.model.StatusCode.NotFound
 
 case class Discount(name: String, value: Double)
 
@@ -25,7 +26,8 @@ object Discounts {
         (for {
           request <- DiscountSvc.request(name)
           resp <- request.send().mapError(throwable("DiscountSvc.request.send")(_).some)
-          _ = resp.code
+          _ <- IO.fail(none)
+            .when(resp.code == NotFound)
         } yield {
           ???
         }) provide env

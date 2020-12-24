@@ -9,7 +9,7 @@ val V = new {
   val zioInteropCats = "2.2.0.1"
   val zio = "1.0.3"
   val distage = "0.10.19"
-  val tapir = "0.17.1"
+  val tapir = "0.16.16"
   val sttp = "2.2.9"
   val elastic4s = "7.10.0"
   val scalaCsv = "1.3.6"
@@ -77,9 +77,9 @@ lazy val `code-challenge-dmytro` = (project in file("."))
 
       Deps.tapirJsonCirce,
       Deps.tapirHttp4sServer,
+      Deps.tapirSwaggerUiHttp4s,
       Deps.tapirOpenapiCirceYaml,
       Deps.tapirOpenapiDocs,
-      Deps.tapirSwaggerUiHttp4s,
 
       Deps.elastic4sClientSttp,
       Deps.elastic4sEffectZio,

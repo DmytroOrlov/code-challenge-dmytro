@@ -26,13 +26,15 @@ object AppPlugin extends PluginDef with ZIODIEffectModule with ConfigModuleDef {
 
   make[DiscountSvc].from(DiscountSvc.make _)
   make[HttpServer].fromHas(HttpServer.make _)
+  make[Endpoints].fromValue(Endpoints.make)
   many[HttpRoutes[Task]]
-    // .addHas(Main.logicRoutes)
+    .addHas(AppMain.routes)
 
   make[CsvReader].fromValue(CsvReader.make)
   make[Discounts].fromHas(Discounts.make)
+  make[Calculate].fromHas(Calculate.make _)
 
-  make[Task[Unit]].from(provideHas(
+  make[UIO[Unit]].from(provideHas(
     program.provide
   ))
 }

@@ -49,4 +49,8 @@ object CsvErr extends Constructors[CsvErr] {
     def error(message: String)(e: Throwable) = new RuntimeException(s"$message: ${e.getMessage}")
   }
 
+  trait AsFailureResp extends CsvErr[FailureResp] {
+    def error(message: String)(e: Throwable) = FailureResp(s"$message: ${e.getMessage}")
+  }
+
 }

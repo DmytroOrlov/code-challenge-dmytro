@@ -4,7 +4,7 @@ import capture.Capture
 import capture.Capture.Constructors
 import cats.syntax.option._
 import com.github.tototoshi.csv.CSVReader
-import eyeem.shopping.CsvErr.error
+import eyeem.shopping.CsvErr.exception
 import zio.IO
 import zio.macros.accessible
 
@@ -15,11 +15,17 @@ trait CsvReader {
   def readLineitems(source: Source): IO[Capture[CsvErr], Stream[Lineitem]]
 }
 
+case class Lineitem(
+    photoId: Int,
+    price: BigDecimal,
+    discountCode: Option[String],
+)
+
 object CsvReader {
   val make = new CsvReader {
     def readLineitems(source: Source) = {
       for {
-        reader <- IO(CSVReader.open(source)).mapError(error("CSVReader.open"))
+        reader <- IO(CSVReader.open(source)).mapError(exception("CSVReader.open"))
         stringsStreamWithHeader = reader.toStream
         res <- IO {
           val stringsStream = stringsStreamWithHeader.tail
@@ -31,26 +37,26 @@ object CsvReader {
                 if (dis.isEmpty) none else dis.some,
               )
           }
-        }.mapError(error("to Lineitem"))
+        }.mapError(exception("to Lineitem"))
       } yield res
     }
   }
 }
 
 trait CsvErr[+A] {
-  def error(message: String)(e: Throwable): A
+  def exception(message: String)(e: Throwable): A
 }
 
 object CsvErr extends Constructors[CsvErr] {
-  def error(message: String)(e: Throwable) =
-    Capture[CsvErr](_.error(message)(e))
+  def exception(message: String)(e: Throwable) =
+    Capture[CsvErr](_.exception(message)(e))
 
   trait AsThrowable extends CsvErr[Throwable] {
-    def error(message: String)(e: Throwable) = new RuntimeException(s"$message: ${e.getMessage}")
+    def exception(message: String)(e: Throwable) = new RuntimeException(s"$message: ${e.getMessage}")
   }
 
   trait AsFailureResp extends CsvErr[FailureResp] {
-    def error(message: String)(e: Throwable) = FailureResp(s"$message: ${e.getMessage}")
+    def exception(message: String)(e: Throwable) = FailureResp(s"$message: ${e.getMessage}")
   }
 
 }

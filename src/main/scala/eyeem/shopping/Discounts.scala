@@ -9,12 +9,12 @@ import sttp.model.StatusCode.NotFound
 import zio._
 import zio.macros.accessible
 
-case class Discount(name: String, discount: Int)
-
 @accessible
 trait Discounts {
   def discount(name: String): IO[Capture[DiscountErr], Option[Discount]]
 }
+
+case class Discount(name: String, discount: Int)
 
 object Discounts {
   val make = {
@@ -28,14 +28,12 @@ object Discounts {
           resp <- request.send().mapError(throwable("DiscountSvc.send"))
           disc <-
             if (resp.code == NotFound) IO.succeed(none)
-            else IO.fromEither(resp.body).bimap(throwable("DiscountSvc.body"), _.some)
+            else IO.fromEither(resp.body).bimap(
+              throwable("DiscountSvc.body"),
+              _.some
+            )
         } yield disc) provide env
     }
-  }
-
-  val dummy = new Discounts {
-    def discount(name: String) =
-      IO.succeed(none)
   }
 }
 

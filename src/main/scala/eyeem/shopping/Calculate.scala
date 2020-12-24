@@ -32,10 +32,12 @@ object Calculate {
               .absolve
           )
           discountMap = discounts.map(d => d.name -> d.discount).toMap.withDefaultValue(0)
-          res = lineitems.foldLeft(BigDecimal(0))((acc, li) => acc + li.discountCode.fold(li.price) { d =>
-            (li.price * (1 - discountMap(d) * BigDecimal(0.01)))
-              .setScale(2, UP)
-          })
+          res = lineitems.foldLeft(BigDecimal(0)) { (acc, li) =>
+            acc + li.discountCode.fold(li.price) { d =>
+              (li.price * (1 - discountMap(d) * BigDecimal(0.01)))
+                .setScale(2, UP)
+            }
+          }
         } yield res) provide env
     }
 }

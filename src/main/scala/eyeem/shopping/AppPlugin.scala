@@ -17,21 +17,18 @@ object AppPlugin extends PluginDef with ZIODIEffectModule with ConfigModuleDef {
   include(AppConfigModule(ConfigFactory.defaultApplication()))
 
   makeConfig[AppCfg]("app")
-  make[String]
-    .named("csv")
-    .fromValue("lineitems.csv")
 
-  make[Sttp].fromResource(Sttp.make)
   make[Console.Service].fromHas(Console.live)
+  make[Sttp].fromResource(Sttp.make)
 
-  make[DiscountSvc].from(DiscountSvc.make _)
   make[HttpServer].fromHas(HttpServer.make _)
   make[Endpoints].fromValue(Endpoints.make)
   many[HttpRoutes[Task]]
     .addHas(AppMain.routes)
 
-  make[CsvReader].fromValue(CsvReader.make)
+  make[DiscountSvc].from(DiscountSvc.make _)
   make[Discounts].fromHas(Discounts.make)
+  make[CsvReader].fromValue(CsvReader.make)
   make[Calculate].fromHas(Calculate.make _)
 
   make[UIO[Unit]].from(provideHas(

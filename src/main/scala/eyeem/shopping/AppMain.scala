@@ -11,26 +11,31 @@ import zio.duration._
 
 import java.net.URI
 import scala.concurrent.duration.{Duration => SDuration}
+import scala.io.Source.fromResource
 import scala.math.BigDecimal.RoundingMode.UP
 
 object AppMain extends App {
-  val program = for {
-    cfg <- ZIO.service[AppCfg]
-    lineitems <- CsvReader.readLineitems
-    dsNames = lineitems.flatMap(_.discountCode).distinct
-    discounts <- ZIO.collectParN(cfg.parallelism)(dsNames.toList)(
-      Discounts.discount(_)
-        .retry((exponential(1.millisecond) >>> elapsed).whileOutput(_ < 20.seconds))
-        .bimap(_.some, _.toRight(none))
-        .absolve
-    )
-    discountMap = discounts.map(d => d.name -> d.discount).toMap.withDefaultValue(0)
-    res = lineitems.foldLeft(BigDecimal(0))((acc, li) => acc + li.discountCode.fold(li.price) { d =>
-      (li.price * (1 - discountMap(d) * BigDecimal(0.01)))
-        .setScale(2, UP)
-    })
-    _ <- putStrLn(s"$res")
-  } yield ()
+  def fromFile(csv: String@Id("csv")) =
+    (for {
+      cfg <- ZIO.service[AppCfg]
+      lineitems <- CsvReader.readLineitems(fromResource(csv))
+      dsNames = lineitems.flatMap(_.discountCode).distinct
+      discounts <- ZIO.collectParN(cfg.parallelism)(dsNames.toList)(
+        Discounts.discount(_)
+          .retry((exponential(1.millisecond) >>> elapsed).whileOutput(_ < 20.seconds))
+          .bimap(_.some, _.toRight(none))
+          .absolve
+      )
+      discountMap = discounts.map(d => d.name -> d.discount).toMap.withDefaultValue(0)
+      res = lineitems.foldLeft(BigDecimal(0))((acc, li) => acc + li.discountCode.fold(li.price) { d =>
+        (li.price * (1 - discountMap(d) * BigDecimal(0.01)))
+          .setScale(2, UP)
+      })
+      _ <- putStrLn(s"$res")
+    } yield ())
+      .mapError(_ continue new DiscountErr.AsThrowable with CsvErr.AsThrowable {})
+
+  val program = HttpServer.bindHttp *> IO.never
 
   def run(args: List[String]) = {
     val pluginConfig = PluginConfig.cached(

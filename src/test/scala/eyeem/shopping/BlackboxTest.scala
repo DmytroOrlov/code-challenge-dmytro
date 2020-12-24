@@ -17,13 +17,28 @@ abstract class BlackboxTest extends DistageBIOEnvSpecScalatest[ZIO] with OptionV
     "apply discounts in provided lineitems.csv" in {
       for {
         csv <- IO(Source.fromResource("lineitems.csv"))
-        total <- Calculate.total(csv).mapError(_ continue AsThrowable)
+        total <- Calculate.total(csv)
+          .mapError(_ continue AsThrowable)
         _ <- IO {
           assert(total === BigDecimal("1887.08"))
         }
       } yield ()
     }
   }
+}
+
+final class DummyTest extends BlackboxTest {
+  override def config: TestConfig = super.config.copy(
+    moduleOverrides = new ModuleDef {
+      make[Discounts].fromHas(
+        for {
+          storage <- Ref.make(Map(
+            "ACTION_33" -> 10, "CRAZY_54" -> 60, "BF_11" -> 10, "SMART_XTREME" -> 10, "BF_12" -> 25, "XMAS_22" -> 11, "EARLY_SPECIAL" -> 33, "SPRING_220" -> 50
+          ))
+          discounts <- Discounts.dummy(storage)
+        } yield discounts
+      )
+    })
 }
 
 final class DockerTest extends BlackboxTest {

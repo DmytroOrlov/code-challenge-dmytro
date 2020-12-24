@@ -8,6 +8,7 @@ import sttp.client.{NothingT, SttpBackend}
 import sttp.model.StatusCode.NotFound
 import zio._
 import zio.macros.accessible
+import zio.random._
 
 @accessible
 trait Discounts {
@@ -35,6 +36,20 @@ object Discounts {
         } yield disc) provide env
     }
   }
+
+  def dummy(storage: Ref[Map[String, Int]]) =
+    for {
+      env <- ZIO.environment[Random]
+    } yield new Discounts {
+      def discount(name: String) =
+        (for {
+          fail <- nextBoolean
+          _ <- IO.fail(throwable("dummy fail")(new RuntimeException))
+            .when(fail)
+          ds <- storage.get
+        } yield ds.get(name).map(Discount(name, _)))
+          .provide(env)
+    }
 }
 
 trait DiscountErr[+A] {

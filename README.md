@@ -1,10 +1,11 @@
 # Run
 ```sh
-$ sbt run
+$ docker-compose up -d && \
+    sbt run
 ```
 ## Try in comman line
 ```sh
-$ curl localhost:8080/total --data-binary @$(pwd)/lineitems.csv
+code-challenge-dmytro$ curl localhost:8080/total --data-binary @lineitems.csv
 {"total":1887.08}
 ```
 ## Open Swagger UI

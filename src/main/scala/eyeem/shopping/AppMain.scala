@@ -24,7 +24,7 @@ object AppMain extends App {
     env <- ZIO.environment[Has[Calculate]]
     total <- Endpoints.total
     docs = Seq(total).toOpenAPI("Shopping total calculator", version)
-    router = Router[Task](
+    res = Router[Task](
       "/" -> ((total.toRoutes { req =>
         Calculate.total(Source.fromBytes(req))
           .bimap(
@@ -35,7 +35,7 @@ object AppMain extends App {
       }: HttpRoutes[Task]) <+>
         new SwaggerHttp4s(docs.toYaml).routes)
     )
-  } yield router
+  } yield res
 
   val program = HttpServer.bindHttp *> IO.never
 

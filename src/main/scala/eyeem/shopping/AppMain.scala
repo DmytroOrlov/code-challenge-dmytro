@@ -59,4 +59,5 @@ case class AppCfg(
     url: URI,
     readTimeout: SDuration,
     parallelism: Int,
+    retryElapsed: SDuration,
 )

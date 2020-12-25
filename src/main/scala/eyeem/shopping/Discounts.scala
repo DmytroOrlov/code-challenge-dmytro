@@ -37,15 +37,15 @@ object Discounts {
     }
   }
 
-  def dummy(storage: Ref[Map[String, Int]]) =
+  def dummy(storage: Ref[Map[String, Int]], failRate: Double = 0.5) =
     for {
       env <- ZIO.environment[Random]
     } yield new Discounts {
       def discount(name: String) =
         (for {
-          fail <- nextBoolean
-          _ <- IO.fail(throwable("dummy fail")(new RuntimeException))
-            .when(fail)
+          fail <- nextDouble
+          _ <- IO.fail(throwable(s"failRate $failRate")(new RuntimeException))
+            .when(fail < failRate)
           ds <- storage.get
         } yield ds.get(name).map(Discount(name, _)))
           .provide(env)

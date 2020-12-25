@@ -5,6 +5,7 @@ import cats.syntax.option.{none, _}
 import zio.Schedule.{elapsed, exponential}
 import zio._
 import zio.clock.Clock
+import zio.duration.Duration.fromScala
 import zio.duration._
 import zio.macros.accessible
 
@@ -27,7 +28,7 @@ object Calculate {
           dsNames = lineitems.flatMap(_.discountCode).distinct
           discounts <- ZIO.collectParN(cfg.parallelism)(dsNames.toList)(
             Discounts.discount(_)
-              .retry((exponential(1.millisecond) >>> elapsed).whileOutput(_ < 20.seconds))
+              .retry((exponential(1.millisecond) >>> elapsed).whileOutput(_ < fromScala(cfg.retryElapsed)))
               .bimap(_.some, _.toRight(none))
               .absolve
           )

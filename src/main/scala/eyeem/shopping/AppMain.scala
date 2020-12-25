@@ -3,6 +3,8 @@ package eyeem.shopping
 import buildinfo.BuildInfo.version
 import cats.syntax.semigroupk._
 import distage._
+import izumi.distage.model.definition.StandardAxis.Repo
+import izumi.distage.model.definition.StandardAxis.Repo.Prod
 import izumi.distage.plugins.PluginConfig
 import izumi.distage.plugins.load.PluginLoader
 import org.http4s.HttpRoutes
@@ -47,7 +49,7 @@ object AppMain extends App {
     )
     val appModules = PluginLoader().load(pluginConfig)
 
-    val app = Injector()
+    val app = Injector(Activation(Repo -> Prod))
       .produceGetF[Task, UIO[Unit]](appModules.merge)
       .useEffect
 

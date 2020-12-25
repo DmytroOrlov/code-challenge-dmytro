@@ -86,6 +86,7 @@ lazy val `code-challenge-dmytro` = (project in file("."))
     ),
     addCompilerPlugin(Deps.betterMonadicFor),
     addCompilerPlugin(Deps.kindProjector),
+    fork in Test := true,
   )
   .dependsOn(macros)
 

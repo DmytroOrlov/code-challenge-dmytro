@@ -4,6 +4,7 @@ import capture.Capture
 import capture.Capture.Constructors
 import cats.syntax.option._
 import eyeem.shopping.DiscountErr.throwable
+import logstage.LogstageZIO.LogZIO
 import sttp.client.{NothingT, SttpBackend}
 import sttp.model.StatusCode.NotFound
 import zio._
@@ -22,9 +23,11 @@ object Discounts {
     for {
       implicit0(sb: SttpBackend[Task, Nothing, NothingT]) <- Sttp.backend
       env <- ZIO.environment[Has[DiscountSvc]]
+      log <- ZIO.service[LogZIO.Service]
     } yield new Discounts {
       def discount(name: String) =
         (for {
+          _ <- log.info(s"discount request $name")
           request <- DiscountSvc.request(name)
           resp <- request.send().mapError(throwable("DiscountSvc.send"))
           disc <-

@@ -7,6 +7,11 @@ import eyeem.shopping.AppMain.program
 import izumi.distage.config.{AppConfigModule, ConfigModuleDef}
 import izumi.distage.effect.modules.ZIODIEffectModule
 import izumi.distage.model.definition.StandardAxis.Repo
+import izumi.logstage.api.IzLogger
+import izumi.logstage.api.logger.AbstractLogger
+import izumi.logstage.api.routing.StaticLogRouter
+import logstage.LogstageZIO.LogZIO
+import logstage.{ConsoleSink, Info, LogBIO3}
 import org.http4s.HttpRoutes
 import zio._
 import zio.console._
@@ -20,6 +25,12 @@ object AppPlugin extends PluginDef with ZIODIEffectModule with ConfigModuleDef {
   makeConfig[AppCfg]("app")
 
   make[Console.Service].fromHas(Console.live)
+  make[LogZIO.Service].from(LogBIO3.fromLogger[ZIO] _)
+  make[AbstractLogger].from {
+    val logger = IzLogger(Info, ConsoleSink.text())
+    StaticLogRouter.instance.setup(logger.router)
+    logger
+  }
   make[Sttp].fromResource(Sttp.make)
 
   make[HttpServer].fromHas(HttpServer.make _)
